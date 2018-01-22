@@ -26,6 +26,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdint.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/types.h>
@@ -166,6 +167,8 @@ static void drawbar(Monitor *m);
 static void drawbars(void);
 static void enternotify(XEvent *e);
 static void expose(XEvent *e);
+static void floatmove(const Arg *arg);
+static void floatresize(const Arg *arg);
 static void focus(Client *c);
 static void focusin(XEvent *e);
 static void focusmon(const Arg *arg);
@@ -192,6 +195,7 @@ static Monitor *recttomon(int x, int y, int w, int h);
 static void resize(Client *c, int x, int y, int w, int h, int interact);
 static void resizeclient(Client *c, int x, int y, int w, int h);
 static void resizemouse(const Arg *arg);
+static void resizewrapper(const Arg *arg);
 static void restack(Monitor *m);
 static void run(void);
 static void scan(void);
@@ -792,6 +796,32 @@ expose(XEvent *e)
 }
 
 void
+floatmove(const Arg *arg)
+{
+	Client *cur = selmon->sel;
+	int16_t dx = arg->i & 0xFFFF;
+	int16_t dy = ( arg->i >> 16 ) & 0xFFFF;
+
+	if(!arg)
+		return;
+
+	resizeclient(cur, cur->x + dx, cur->y + dy, cur->w, cur->h);
+}
+
+void 
+floatresize(const Arg *arg)
+{
+	Client *cur = selmon->sel;
+	int16_t dw = arg->i & 0xFFFF;
+	int16_t dh = ( arg->i >> 16 ) & 0xFFFF;
+
+	if(!arg)
+		return;
+
+	resizeclient(cur, cur->x, cur->y, cur->w + dw, cur->h + dh);
+}
+
+void
 focus(Client *c)
 {
 	if (!c || !ISVISIBLE(c))
@@ -1358,6 +1388,22 @@ resizemouse(const Arg *arg)
 		sendmon(c, m);
 		selmon = m;
 		focus(NULL);
+	}
+}
+
+void
+resizewrapper(const Arg *arg)
+{
+	Arg m_arg;
+	if(!arg)
+		return;
+
+	if(selmon->sel->isfloating || selmon->lt[selmon->sellt]->arrange == NULL)
+		floatresize(arg);
+	else
+	{
+		m_arg.f = (int16_t)(arg->i & 0xFFFF) / 1000.0;
+		setmfact(&m_arg);
 	}
 }
 
