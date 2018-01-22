@@ -187,6 +187,7 @@ static void maprequest(XEvent *e);
 static void monocle(Monitor *m);
 static void motionnotify(XEvent *e);
 static void movemouse(const Arg *arg);
+static void movewrapper(const Arg *arg);
 static Client *nexttiled(Client *c);
 static void pop(Client *);
 static void propertynotify(XEvent *e);
@@ -808,7 +809,7 @@ floatmove(const Arg *arg)
 	resizeclient(cur, cur->x + dx, cur->y + dy, cur->w, cur->h);
 }
 
-void 
+void
 floatresize(const Arg *arg)
 {
 	Client *cur = selmon->sel;
@@ -1238,6 +1239,17 @@ movemouse(const Arg *arg)
 		focus(NULL);
 	}
 }
+
+void
+movewrapper(const Arg *arg)
+{
+	if(!arg)
+		return;
+
+	if(selmon->sel->isfloating || selmon->lt[selmon->sellt]->arrange == NULL)
+		floatmove(arg);
+}
+
 
 Client *
 nexttiled(Client *c)
