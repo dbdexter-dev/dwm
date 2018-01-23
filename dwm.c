@@ -167,8 +167,6 @@ static void drawbar(Monitor *m);
 static void drawbars(void);
 static void enternotify(XEvent *e);
 static void expose(XEvent *e);
-static void floatmove(const Arg *arg);
-static void floatresize(const Arg *arg);
 static void focus(Client *c);
 static void focusin(XEvent *e);
 static void focusmon(const Arg *arg);
@@ -796,31 +794,6 @@ expose(XEvent *e)
 		drawbar(m);
 }
 
-void
-floatmove(const Arg *arg)
-{
-	Client *cur = selmon->sel;
-	int16_t dx = arg->i & 0xFFFF;
-	int16_t dy = ( arg->i >> 16 ) & 0xFFFF;
-
-	if(!arg)
-		return;
-
-	resizeclient(cur, cur->x + dx, cur->y + dy, cur->w, cur->h);
-}
-
-void
-floatresize(const Arg *arg)
-{
-	Client *cur = selmon->sel;
-	int16_t dw = arg->i & 0xFFFF;
-	int16_t dh = ( arg->i >> 16 ) & 0xFFFF;
-
-	if(!arg)
-		return;
-
-	resizeclient(cur, cur->x, cur->y, cur->w + dw, cur->h + dh);
-}
 
 void
 focus(Client *c)
@@ -1243,11 +1216,14 @@ movemouse(const Arg *arg)
 void
 movewrapper(const Arg *arg)
 {
+	Client *cur = selmon->sel;
+	int16_t dx = arg->i & 0xFFFF;
+	int16_t dy = ( arg->i >> 16 ) & 0xFFFF;
+
 	if(!arg)
 		return;
-
 	if(selmon->sel->isfloating || selmon->lt[selmon->sellt]->arrange == NULL)
-		floatmove(arg);
+		resizeclient(cur, cur->x + dx, cur->y + dy, cur->w, cur->h);
 }
 
 
@@ -1407,16 +1383,20 @@ void
 resizewrapper(const Arg *arg)
 {
 	Arg m_arg;
+	Client *cur = selmon->sel;
+	int16_t dw = arg->i & 0xFFFF;
+	int16_t dh = ( arg->i >> 16 ) & 0xFFFF;
+
 	if(!arg)
 		return;
-
 	if(selmon->sel->isfloating || selmon->lt[selmon->sellt]->arrange == NULL)
-		floatresize(arg);
+		resizeclient(cur, cur->x, cur->y, cur->w + dw, cur->h + dh);
 	else
 	{
 		m_arg.f = (int16_t)(arg->i & 0xFFFF) / 1000.0;
 		setmfact(&m_arg);
 	}
+
 }
 
 void
